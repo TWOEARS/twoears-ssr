@@ -31,11 +31,13 @@
 #define SSR_BINAURALRENDERER_H
 
 #include "rendererbase.h"
+#include "ssr_global.h"
 #include "apf/iterator.h"  // for apf::cast_proxy, apf::make_cast_proxy()
 #include "apf/convolver.h"  // for apf::conv::*
 #include "apf/container.h"  // for apf::fixed_matrix
 #include "apf/sndfiletools.h"  // for apf::load_sndfile
 #include "apf/combine_channels.h"  // for apf::raised_cosine_fade, ...
+#include "apf/blockdelayline.h"  // for NonCausalBlockDelayLine
 
 namespace ssr
 {
@@ -49,6 +51,7 @@ class BinauralRenderer : public SourceToOutput<BinauralRenderer, RendererBase>
   public:
     static const char* name() { return "BinauralRenderer"; }
 
+    class Input;
     class SourceChannel;
     class Source;
     class Output;
@@ -57,6 +60,7 @@ class BinauralRenderer : public SourceToOutput<BinauralRenderer, RendererBase>
     BinauralRenderer(const apf::parameter_map& params)
       : _base(params)
       , _fade(this->block_size())
+      , _max_delay(this->params.get("delayline_size", 100000))
       , _partitions(0)
     {}
 
@@ -78,10 +82,30 @@ class BinauralRenderer : public SourceToOutput<BinauralRenderer, RendererBase>
     }
 
     apf::raised_cosine_fade<sample_type> _fade;
+    size_t _max_delay;
     size_t _partitions;
     size_t _angles;  // Number of angles in HRIR file
     std::unique_ptr<hrtf_set_t> _hrtfs;
     std::unique_ptr<apf::conv::Filter> _neutral_filter;
+};
+
+class BinauralRenderer::Input : public _base::Input
+{
+  public:
+    friend class Source;  // give access to _delayline
+
+    Input(const Params& p)
+      : _base::Input(p)
+      , _delayline(this->parent.block_size(), this->parent._max_delay)
+    {}
+
+    APF_PROCESS(Input, _base::Input)
+    {
+      _delayline.write_block(this->buffer.begin());
+    }
+
+  private:
+    apf::BlockDelayLine<sample_type> _delayline;
 };
 
 class BinauralRenderer::SourceChannel : public apf::conv::Output
@@ -248,9 +272,11 @@ class BinauralRenderer::Source : public apf::conv::Input, public _base::Source
       // TODO: assert that p.parent != 0?
       : apf::conv::Input(p.parent->block_size(), p.parent->_partitions)
       , _base::Source(p, 2, *this)
+      , delayline(p.input->_delayline)
       , _hrtf_index(size_t(-1))
       , _interp_factor(-1.0f)
       , _weight(0.0f)
+      , _int_delay(0)
     {}
 
     APF_PROCESS(Source, _base::Source)
@@ -258,10 +284,13 @@ class BinauralRenderer::Source : public apf::conv::Input, public _base::Source
       _process();
     }
 
+    const apf::BlockDelayLine<sample_type>& delayline;
+
   private:
     apf::BlockParameter<size_t> _hrtf_index;
     apf::BlockParameter<float> _interp_factor;
     apf::BlockParameter<float> _weight;
+    apf::BlockParameter<int> _int_delay;
 };
 
 void BinauralRenderer::Source::_process()
@@ -269,12 +298,14 @@ void BinauralRenderer::Source::_process()
   float interp_factor = 0.0f;
   float weight = 0.0f;
 
-  this->add_block(_input.begin());
+  this->add_block(this->delayline.get_read_circulator(_int_delay));
 
   auto ref_pos = _input.parent.state.reference_position
     + _input.parent.state.reference_offset_position;
   auto ref_ori = _input.parent.state.reference_orientation
     + _input.parent.state.reference_offset_orientation;
+
+  float float_delay = 0.0f;
 
   if (this->weighting_factor != 0)
   {
@@ -304,13 +335,16 @@ void BinauralRenderer::Source::_process()
 
       weight *= 0.5f / source_distance; // 1/r
       // weight *= 0.25f / sqrt(source_distance); // 1/sqrt(r)
+
+      float_delay = source_distance*c_inverse*this->parent.sample_rate();
     }
 
     weight *= this->weighting_factor;
   }
 
   _interp_factor = interp_factor;  // Assign (once!) to BlockParameter
-  _weight = weight;  // ... same here
+  _int_delay = static_cast<int>(float_delay + 0.5f);  // ... same here
+  _weight = this->delayline.delay_is_valid(_int_delay) ? weight : 0;
 
   float angles = _input.parent._angles;
 
@@ -343,7 +377,11 @@ void BinauralRenderer::Source::_process()
   {
     crossfade_mode = nothing;
   }
-  else if (queues_empty && !_weight.changed() && !hrtf_changed)
+  else if (queues_empty
+    && !_weight.changed()
+    && !hrtf_changed
+    && !_int_delay.changed()
+    )
   {
     crossfade_mode = constant;
   }
@@ -399,6 +437,12 @@ void BinauralRenderer::Source::_process()
 
     channel.crossfade_mode = crossfade_mode;
     channel.weight = _weight;
+  }
+
+  // add block with new delay
+  if (_int_delay.changed())
+  {
+    this->add_block(this->delayline.get_read_circulator(_int_delay), true);
   }
 
   assert(_hrtf_index.exactly_one_assignment());
