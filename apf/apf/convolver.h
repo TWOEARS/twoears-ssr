@@ -310,7 +310,7 @@ struct Input : TransformBase
   }
 
   template<typename In>
-  void add_block(In first);
+  void add_block(In first, bool overwrite = false);
 
   size_t partitions() const { return spectra.size() - 1; }
 
@@ -325,13 +325,16 @@ struct Input : TransformBase
  **/
 template<typename In>
 void
-Input::add_block(In first)
+Input::add_block(In first, bool overwrite)
 {
   In last = first;
   std::advance(last, this->block_size());
 
-  // rotate buffers (this->spectra.size() is always at least 2)
-  this->spectra.move(--this->spectra.end(), this->spectra.begin());
+  if (!overwrite)
+  {
+    // rotate buffers (this->spectra.size() is always at least 2)
+    this->spectra.move(--this->spectra.end(), this->spectra.begin());
+  }
 
   auto& current = this->spectra.front();
   auto& next = this->spectra.back();

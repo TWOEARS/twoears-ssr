@@ -237,6 +237,35 @@ SECTION("combinations", "")
   CHECK_RANGE(result, zeros, 8);
 }
 
+SECTION("overwrite", "")
+{
+  float one = 1.0f;
+  auto impulse = c::Filter(8, &one, (&one)+1);
+  bool overwrite = true;
+
+  conv_output.set_filter(impulse);
+  result = conv_output.convolve();
+
+  CHECK_RANGE(result, zeros, 8);
+
+  conv_input.add_block(test_signal, overwrite);
+  result = conv_output.convolve();
+
+  CHECK_RANGE(result, test_signal, 8);
+
+  conv_input.add_block(test_signal + 8, overwrite);
+  conv_input.add_block(test_signal, overwrite);
+  result = conv_output.convolve();
+
+  CHECK_RANGE(result, test_signal, 8);
+
+  conv_input.add_block(test_signal, overwrite);
+  conv_input.add_block(test_signal + 8, !overwrite);
+  result = conv_output.convolve();
+
+  CHECK_RANGE(result, test_signal + 8, 8);
+}
+
 // TODO: test copy_nested() and transform_nested()!
 
 } // TEST_CASE
