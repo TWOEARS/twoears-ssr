@@ -311,6 +311,10 @@ void BinauralRenderer::Source::_process()
   {
     weight = 1;
 
+    float source_distance = (this->position - ref_pos).length();
+
+    float_delay = source_distance*c_inverse*this->parent.sample_rate();
+
     if (this->model == ::Source::plane)
     {
       // no distance attenuation for plane waves
@@ -323,8 +327,6 @@ void BinauralRenderer::Source::_process()
     }
     else
     {
-      float source_distance = (this->position - ref_pos).length();
-
       if (source_distance < 0.5f)
       {
         interp_factor = 1.0f - 2 * source_distance;
@@ -335,8 +337,6 @@ void BinauralRenderer::Source::_process()
 
       weight *= 0.5f / source_distance; // 1/r
       // weight *= 0.25f / sqrt(source_distance); // 1/sqrt(r)
-
-      float_delay = source_distance*c_inverse*this->parent.sample_rate();
     }
 
     weight *= this->weighting_factor;
