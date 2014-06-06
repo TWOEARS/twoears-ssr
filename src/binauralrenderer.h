@@ -61,6 +61,7 @@ class BinauralRenderer : public SourceToOutput<BinauralRenderer, RendererBase>
       : _base(params)
       , _fade(this->block_size())
       , _max_delay(this->params.get("delayline_size", 100000))
+      , _initial_delay(this->params.get("initial_delay", 100000))
       , _partitions(0)
     {}
 
@@ -83,6 +84,7 @@ class BinauralRenderer : public SourceToOutput<BinauralRenderer, RendererBase>
 
     apf::raised_cosine_fade<sample_type> _fade;
     size_t _max_delay;
+    size_t _initial_delay;
     size_t _partitions;
     size_t _angles;  // Number of angles in HRIR file
     std::unique_ptr<hrtf_set_t> _hrtfs;
@@ -96,7 +98,8 @@ class BinauralRenderer::Input : public _base::Input
 
     Input(const Params& p)
       : _base::Input(p)
-      , _delayline(this->parent.block_size(), this->parent._max_delay)
+      , _delayline(this->parent.block_size(), this->parent._max_delay
+        , this->parent._initial_delay)
     {}
 
     APF_PROCESS(Input, _base::Input)
@@ -105,7 +108,7 @@ class BinauralRenderer::Input : public _base::Input
     }
 
   private:
-    apf::BlockDelayLine<sample_type> _delayline;
+    apf::NonCausalBlockDelayLine<sample_type> _delayline;
 };
 
 class BinauralRenderer::SourceChannel : public apf::conv::Output
@@ -284,7 +287,7 @@ class BinauralRenderer::Source : public apf::conv::Input, public _base::Source
       _process();
     }
 
-    const apf::BlockDelayLine<sample_type>& delayline;
+    const apf::NonCausalBlockDelayLine<sample_type>& delayline;
 
   private:
     apf::BlockParameter<size_t> _hrtf_index;
@@ -297,6 +300,7 @@ void BinauralRenderer::Source::_process()
 {
   float interp_factor = 0.0f;
   float weight = 0.0f;
+  float float_delay = 0.0f;
 
   this->add_block(this->delayline.get_read_circulator(_int_delay));
 
@@ -305,14 +309,13 @@ void BinauralRenderer::Source::_process()
   auto ref_ori = _input.parent.state.reference_orientation
     + _input.parent.state.reference_offset_orientation;
 
-  float float_delay = 0.0f;
-
   if (this->weighting_factor != 0)
   {
     weight = 1;
 
+    // distance of reference and source
     float source_distance = (this->position - ref_pos).length();
-
+    // delay based on distance
     float_delay = source_distance*c_inverse*this->parent.sample_rate();
 
     if (this->model == ::Source::plane)
@@ -324,6 +327,10 @@ void BinauralRenderer::Source::_process()
       // 1/sqrt(r):
       //weight *= 0.25f / sqrt(
       //    _input.parent.state.amplitude_reference_distance);
+
+      // delay of plane wave (additional scalar product, may be neg.)
+      float_delay *= cos(angle(ref_pos - this->position,
+        this->orientation));
     }
     else
     {
