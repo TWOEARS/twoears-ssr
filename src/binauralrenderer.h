@@ -350,8 +350,14 @@ void BinauralRenderer::Source::_process()
   }
 
   _interp_factor = interp_factor;  // Assign (once!) to BlockParameter
-  _int_delay = static_cast<int>(float_delay + 0.5f);  // ... same here
-  _weight = this->delayline.delay_is_valid(_int_delay) ? weight : 0;
+  _weight = weight;  // ... same here
+
+  // check and correct delay
+  // TODO: find a way to circumvent this type declaration
+  apf::NonCausalBlockDelayLine<sample_type>::difference_type
+     int_delay = static_cast<int>(float_delay + 0.5f);
+  this->delayline.delay_is_valid(int_delay, int_delay);
+  _int_delay = int_delay;
 
   float angles = _input.parent._angles;
 
