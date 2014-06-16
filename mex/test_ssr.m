@@ -13,7 +13,7 @@ reference_position = [-1; 0]; % one column vector
 reference_orientation = 90; % one angle in degree
 
 params.block_size = 1024;
-params.threads = 2;
+params.threads = 1;
 
 % only for loudspeaker renderers:
 params.reproduction_setup = '../data/reproduction_setups/circle.asd';
