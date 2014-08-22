@@ -152,7 +152,7 @@ class BrsRenderer::Source : public _base::Source
       // (source positions are NOT considered!)
       // 90 degree is in the middle of index 0
       _brtf_index = size_t(apf::math::wrap(
-          (azi - 90.0f) * float(_angles) / 360.0f + 0.5f, float(_angles)));
+          azi * float(_angles) / 360.0f + 0.5f, float(_angles)));
 
       using namespace apf::CombineChannelsResult;
       auto crossfade_mode = apf::CombineChannelsResult::type();
