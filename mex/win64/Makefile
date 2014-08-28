@@ -1,4 +1,4 @@
-MEXFILES ?= ssr_binaural ssr_aap ssr_nfc_hoa ssr_vbap ssr_wfs
+MEXFILES ?= ssr_binaural ssr_aap ssr_nfc_hoa ssr_vbap ssr_wfs ssr_brs ssr_generic
 
 MATLABROOT ?=c:/Progra~1/MATLAB/R2012b
 SSR_DIR ?= ../..
