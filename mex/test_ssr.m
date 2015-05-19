@@ -15,6 +15,8 @@ reference_orientation = 90; % one angle in degree
 params.block_size = 1024;
 params.threads = 1;
 
+verbose = true;  % additional information about initialization over stdout
+
 % only for loudspeaker renderers:
 params.reproduction_setup = '../data/reproduction_setups/circle.asd';
 
@@ -33,7 +35,7 @@ end
 sig = single(sig);
 sources = size(sig, 2);
 
-ssr('init', sources, params)
+ssr('init', sources, params, verbose)  % third parameter is optional
 
 ssr('source_position', positions)
 ssr('source_orientation', orientations)
