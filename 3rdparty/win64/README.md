@@ -3,9 +3,9 @@ interface of the SoundScape Renderer running under Windows. The following lists
 show different Libraries with their respective files, license information, and
 weblinks.
 
-### LIBFFTW
+## LIBFFTW
 
-## Filelist
+### Filelist
 
 * include/fftw3.h
 * lib/libfftw3f-3.lib
@@ -13,20 +13,23 @@ weblinks.
 * lib/libfftw3f-3.def
 * bin/libfftw3f-3.dll
 
-## License and Copyright
+### License and Copyright
 
 Licensed under the GPLv2
+
 Copyright (c) 2003, 2007-14 Matteo Frigo
+
 Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
 
-## Weblinks
+### Weblinks
 
 The binaries can be found at http://www.fftw.org/install/windows.html
+
 The source code can be found at https://github.com/FFTW/fftw3
 
-### LIBSNDFILE
+## LIBSNDFILE
 
-## Filelist
+### Filelist
 
 * include/sndfile.h
 * include/sndfile.hh
@@ -34,19 +37,21 @@ The source code can be found at https://github.com/FFTW/fftw3
 * lib/libsndfile-1.lib
 * bin/libsndfile-1.dll
 
-## License and Copyright
+### License and Copyright
 
 Licensed under the LGPLv2.1
+
 Copyright (c) 2007-2015 Erik de Castro Lopo
 
-## Weblinks
+### Weblinks
 
 The binaries can be found at http://www.mega-nerd.com/libsndfile/#Download
+
 The source code can be found at https://github.com/erikd/libsndfile
 
-### LIBXML
+## LIBXML
 
-## Filelist
+### Filelist
 
 * include/libxml/*
 * lib/libxml2.a
@@ -54,19 +59,21 @@ The source code can be found at https://github.com/erikd/libsndfile
 * lib/libxml2.dl
 * bin/libxml2-2.dll
 
-## License and Copyright
+### License and Copyright
 
 The license information can be found at https://git.gnome.org/browse/libxml2/
+
 Copyright (c) 1998-2012 Daniel Veillard
 
-## Weblinks
+### Weblinks
 
 The binaries can be found at ftp://ftp.zlatkovic.com/libxml/64bit/
+
 The source code can be found at https://git.gnome.org/browse/libxml2/
 
-### ZLIB
+## ZLIB
 
-## Filelist
+### Filelist
 
 * include/zlib.h
 * include/zconf.h
@@ -74,19 +81,21 @@ The source code can be found at https://git.gnome.org/browse/libxml2/
 * lib/libz.dll.a
 * bin/zlib1.dll
 
-## License and Copyright
+### License and Copyright
 
-The license information can be found at https://github.com/madler/zlib
+The license information can be found at https://github.com/madler/zlib .
+
 Copyright (c) 1995-2013 Jean-loup Gailly and Mark Adler
 
-## Weblinks
+### Weblinks
 
-The binaries can be found at ftp://ftp.zlatkovic.com/libxml/64bit/.
+The binaries can be found at ftp://ftp.zlatkovic.com/libxml/64bit/ 
+
 The source code can be found at https://github.com/madler/zlib
 
 ## LIBICONV
 
-## Filelist
+### Filelist
 
 * include/iconv.h
 * lib/libcharset.dll.a
@@ -96,12 +105,13 @@ The source code can be found at https://github.com/madler/zlib
 * lib/libiconv.dll.a
 * bin/libiconv-2.dll
 
-## License and Copyright
+### License and Copyright
 
 Licensed under the GPLv2.
+
 Copyright (c) 1998, 2010 Free Software Foundation, Inc
 
-## Weblinks
+### Weblinks
 
 The binaries and the source code can be found at
 http://gnuwin32.sourceforge.net/packages/libiconv.htm
